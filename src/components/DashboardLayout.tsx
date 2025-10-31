@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { BookOpen, Home, Rocket, Library, MessageSquare, Settings, FolderOpen } from "lucide-react";
+import { Home, Rocket, Library, MessageSquare, Settings, FolderOpen } from "lucide-react";
+import logoImage from "@/assets/logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -36,8 +37,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <Sidebar>
           <div className="p-4 border-b">
             <Link to="/" className="flex items-center gap-2 font-semibold text-lg">
-              <BookOpen className="h-5 w-5 text-primary" />
-              <span>OpenCollab</span>
+              <img src={logoImage} alt="MeshConnect Logo" className="h-5 w-5" />
+              <span>MeshConnect</span>
             </Link>
           </div>
           
