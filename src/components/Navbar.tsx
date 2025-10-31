@@ -21,11 +21,18 @@ const Navbar = () => {
           <Link to="/community" className="text-sm font-medium hover:text-primary transition-colors">
             Community
           </Link>
+          <Link to="/webinar" className="text-sm font-medium hover:text-primary transition-colors">
+            Webinar
+          </Link>
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm">Sign In</Button>
-          <Button size="sm">Get Started</Button>
+          <Link to="/signin">
+            <Button variant="ghost" size="sm">Sign In</Button>
+          </Link>
+          <Link to="/signup">
+            <Button size="sm">Get Started</Button>
+          </Link>
         </div>
       </div>
     </nav>

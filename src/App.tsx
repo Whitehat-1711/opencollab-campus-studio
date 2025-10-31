@@ -9,6 +9,9 @@ import MyProjects from "./pages/MyProjects";
 import SprintHub from "./pages/SprintHub";
 import Library from "./pages/Library";
 import Community from "./pages/Community";
+import Webinar from "./pages/Webinar";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
 import CreateProject from "./pages/CreateProject";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +30,9 @@ const App = () => (
           <Route path="/sprint-hub" element={<SprintHub />} />
           <Route path="/library" element={<Library />} />
           <Route path="/community" element={<Community />} />
+          <Route path="/webinar" element={<Webinar />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route path="/create-project" element={<CreateProject />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

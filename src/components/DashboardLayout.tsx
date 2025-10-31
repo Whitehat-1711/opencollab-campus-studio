@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Rocket, Library, MessageSquare, Settings, FolderOpen } from "lucide-react";
+import { Home, Rocket, Library, MessageSquare, Settings, FolderOpen, Video } from "lucide-react";
 import logoImage from "@/assets/logo.png";
 import {
   Sidebar,
@@ -21,6 +21,7 @@ const menuItems = [
   { title: "Sprint Hub", url: "/sprint-hub", icon: Rocket },
   { title: "OER Library", url: "/library", icon: Library },
   { title: "Community", url: "/community", icon: MessageSquare },
+  { title: "Webinar", url: "/webinar", icon: Video },
   { title: "Settings", url: "/dashboard/settings", icon: Settings },
 ];
 
