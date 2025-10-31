@@ -1,9 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Video, Mic, MonitorUp, Settings, Phone, MessageSquare, Users, Clock } from "lucide-react";
+import { Video, Mic, MonitorUp, Settings, Phone, MessageSquare, Users, Clock, Circle, Download, Sparkles } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const SprintHub = () => {
   const [notes, setNotes] = useState("");
@@ -11,12 +11,130 @@ const SprintHub = () => {
     { id: 1, user: "Sarah Chen", message: "Great progress on chapter 3!", time: "2 min ago" },
     { id: 2, user: "Mike Johnson", message: "I've shared my screen to review the outline", time: "5 min ago" },
   ]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcription, setTranscription] = useState("");
+  const [summary, setSummary] = useState("");
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const transcriptionHistoryRef = useRef<string[]>([]);
+  const summarizationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const participants = [
     { id: 1, name: "Sarah Chen", role: "Lead Author", status: "online" },
     { id: 2, name: "Mike Johnson", role: "Contributor", status: "online" },
     { id: 3, name: "Elena Rodriguez", role: "Editor", status: "online" },
   ];
+
+  // Initialize Web Speech API for real-time transcription
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setTranscription(prev => prev + transcript + ' ');
+        transcriptionHistoryRef.current.push(transcript);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+      };
+    }
+  }, []);
+
+  // AI Summarization function
+  const generateSummary = async (text: string) => {
+    setIsSummarizing(true);
+    try {
+      // Simulate AI summarization (replace with actual API call)
+      // In production, you would call OpenAI, Anthropic, or similar API
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Simple summarization logic (replace with AI model)
+      const sentences = text.split('.').filter(s => s.trim().length > 0);
+      const summaryPoints = sentences.slice(0, 3).map((s, i) => `• ${s.trim()}`);
+      setSummary(summaryPoints.join('\n'));
+    } catch (error) {
+      console.error('Error generating summary:', error);
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  // Auto-summarize every 2 minutes
+  useEffect(() => {
+    if (isRecording) {
+      summarizationIntervalRef.current = setInterval(() => {
+        const recentTranscript = transcriptionHistoryRef.current.slice(-10).join(' ');
+        if (recentTranscript.length > 50) {
+          generateSummary(recentTranscript);
+        }
+      }, 120000); // 2 minutes
+    }
+
+    return () => {
+      if (summarizationIntervalRef.current) {
+        clearInterval(summarizationIntervalRef.current);
+      }
+    };
+  }, [isRecording]);
+
+  // Start recording when component mounts
+  useEffect(() => {
+    if (recognitionRef.current && !isRecording) {
+      try {
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } catch (error) {
+        console.error('Error starting recognition:', error);
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current && isRecording) {
+        recognitionRef.current.stop();
+        setIsRecording(false);
+      }
+    };
+  }, []);
+
+  // Handle end sprint
+  const handleEndSprint = () => {
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    }
+    
+    // Generate final summary
+    if (transcription.length > 0) {
+      generateSummary(transcription);
+    }
+
+    if (summarizationIntervalRef.current) {
+      clearInterval(summarizationIntervalRef.current);
+    }
+  };
+
+  // Export meeting minutes
+  const handleExportMinutes = () => {
+    const content = `Meeting Minutes\n\nTranscription:\n${transcription}\n\nSummary:\n${summary}`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `meeting-minutes-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <DashboardLayout>
@@ -32,7 +150,13 @@ const SprintHub = () => {
               <Clock className="h-4 w-4" />
               <span>45:23</span>
             </div>
-            <Button variant="destructive" size="sm">
+            {isRecording && (
+              <div className="flex items-center gap-2 text-sm text-red-500">
+                <Circle className="h-3 w-3 fill-red-500 animate-pulse" />
+                <span>Recording</span>
+              </div>
+            )}
+            <Button variant="destructive" size="sm" onClick={handleEndSprint}>
               <Phone className="h-4 w-4 mr-2" />
               End Sprint
             </Button>
@@ -73,6 +197,61 @@ const SprintHub = () => {
                   <Settings className="h-4 w-4" />
                 </Button>
               </div>
+            </Card>
+
+            {/* AI Meeting Transcription - Live */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold">Live Transcription</h3>
+                  {isRecording && (
+                    <div className="flex items-center gap-1 text-xs text-red-500">
+                      <Circle className="h-2 w-2 fill-red-500 animate-pulse" />
+                      <span>Active</span>
+                    </div>
+                  )}
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={handleExportMinutes}
+                  disabled={!transcription && !summary}
+                >
+                  <Download className="h-3 w-3 mr-1" />
+                  Export
+                </Button>
+              </div>
+              <Textarea
+                placeholder="Transcription will appear here as you speak..."
+                className="min-h-[150px] resize-none font-mono text-sm"
+                value={transcription}
+                readOnly
+              />
+            </Card>
+
+            {/* AI Summary */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <h3 className="font-semibold">AI Summary</h3>
+                  {isSummarizing && (
+                    <div className="flex items-center gap-1 text-xs text-primary">
+                      <Circle className="h-2 w-2 fill-primary animate-pulse" />
+                      <span>Generating...</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <Textarea
+                placeholder="AI-generated summary will appear here every 2 minutes..."
+                className="min-h-[150px] resize-none"
+                value={summary}
+                readOnly
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Summary auto-updates every 2 minutes • Final summary on meeting end
+              </p>
             </Card>
 
             {/* Collaborative Notes */}
